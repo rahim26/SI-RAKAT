@@ -1,0 +1,1513 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SI-RAKAT - SRT 9 Banjarbaru</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              navy: '#172554',
+              blue: '#2563EB',
+              softblue: '#EFF6FF',
+              teal: '#0F766E',
+            }
+          },
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F8FAFC; }
+    .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); }
+    @media print {
+      .no-print { display: none !important; }
+      .print-only { display: block !important; }
+      body { background-color: white !important; color: black !important; }
+    }
+  </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col">
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toastContainer" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- MODAL CONTAINER (FOR CONFIRMATIONS & DETAILS) -->
+  <div id="modalOverlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 hidden flex items-center justify-center p-4 overflow-y-auto">
+    <div id="modalContent" class="bg-white rounded-xl shadow-2xl max-w-4xl w-full p-6 transform transition-all scale-95 opacity-0 duration-200 overflow-hidden">
+      <!-- Dynamic Content -->
+    </div>
+  </div>
+
+  <!-- 1. PAGE LOGIN -->
+  <div id="pageLogin" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-brand-navy via-slate-900 to-blue-950 p-4">
+    <div class="bg-white rounded-2xl shadow-2xl overflow-hidden w-full max-w-md p-8 border border-slate-100">
+      <div class="text-center mb-8">
+        <div class="inline-flex p-3 bg-blue-50 text-brand-blue rounded-xl mb-3">
+          <i data-lucide="shield-alert" class="w-10 h-10"></i>
+        </div>
+        <h2 class="text-2xl font-bold text-slate-900 tracking-wide">SI-RAKAT</h2>
+        <p class="text-xs font-semibold text-brand-blue uppercase tracking-wider mt-0.5">SRT 9 BANJARBARU</p>
+        <p class="text-xs text-slate-500 mt-1">Sistem Informasi Rekam Aduan dan Kasus Terpadu</p>
+      </div>
+
+      <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-5">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 uppercase mb-2">Username</label>
+          <div class="relative">
+            <i data-lucide="user" class="w-5 h-5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+            <input type="text" id="loginUsername" required class="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue transition text-sm" placeholder="Masukkan username">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 uppercase mb-2">Password</label>
+          <div class="relative">
+            <i data-lucide="lock" class="w-5 h-5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+            <input type="password" id="loginPassword" required class="w-full pl-10 pr-10 py-3 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue transition text-sm" placeholder="Masukkan password">
+            <button type="button" onclick="togglePasswordVisibility('loginPassword')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+              <i data-lucide="eye" class="w-5 h-5"></i>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" id="btnLogin" class="w-full bg-brand-navy hover:bg-slate-800 text-white font-semibold py-3 rounded-lg shadow-lg shadow-brand-navy/20 transition duration-200 flex items-center justify-center gap-2">
+          <span>Masuk Sistem</span>
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </button>
+      </form>
+
+      <div class="mt-8 text-center border-t pt-4 border-slate-100 text-xs text-slate-400">
+        &copy; 2026 SI-RAKAT - Sekolah Rakyat Terintegrasi 9 Banjarbaru
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. MAIN APP LAYOUT -->
+  <div id="mainApp" class="hidden min-h-screen flex flex-col md:flex-row">
+    
+    <!-- SIDEBAR -->
+    <aside id="sidebar" class="w-full md:w-64 bg-brand-navy text-white flex-shrink-0 flex flex-col justify-between transition-all duration-300 z-30">
+      <div>
+        <div class="p-5 border-b border-slate-800 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="p-2 bg-brand-blue text-white rounded-lg">
+              <i data-lucide="shield" class="w-6 h-6"></i>
+            </div>
+            <div>
+              <h1 class="font-bold text-base tracking-wider text-white">SI-RAKAT</h1>
+              <p class="text-[10px] text-slate-400 font-medium">SRT 9 BANJARBARU</p>
+            </div>
+          </div>
+          <button class="md:hidden text-slate-300" onclick="toggleMobileSidebar()">
+            <i data-lucide="x" class="w-6 h-6"></i>
+          </button>
+        </div>
+
+        <nav class="p-4 space-y-1 text-sm font-medium">
+          <a href="#" onclick="switchTab('dashboard')" id="nav-dashboard" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-brand-blue text-white shadow-sm">
+            <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+            <span>Dashboard</span>
+          </a>
+          <a href="#" onclick="switchTab('create')" id="nav-create" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white transition">
+            <i data-lucide="plus-circle" class="w-5 h-5"></i>
+            <span>Tambah Laporan</span>
+          </a>
+          <a href="#" onclick="switchTab('incidents')" id="nav-incidents" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white transition">
+            <i data-lucide="file-text" class="w-5 h-5"></i>
+            <span>Data Insiden</span>
+          </a>
+          <a href="#" onclick="switchTab('monitoring')" id="nav-monitoring" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white transition">
+            <i data-lucide="activity" class="w-5 h-5"></i>
+            <span>Pemantauan Kasus</span>
+          </a>
+          <a href="#" onclick="switchTab('logs')" id="nav-logs" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white transition">
+            <i data-lucide="history" class="w-5 h-5"></i>
+            <span>Riwayat Aktivitas</span>
+          </a>
+          <a href="#" onclick="switchTab('users')" id="nav-users" class="admin-only flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white transition hidden">
+            <i data-lucide="users" class="w-5 h-5"></i>
+            <span>Manajemen User</span>
+          </a>
+        </nav>
+      </div>
+
+      <div class="p-4 border-t border-slate-800">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-full bg-slate-700 text-white flex items-center justify-center font-bold text-sm" id="userAvatar">U</div>
+            <div class="truncate">
+              <p class="text-xs font-semibold text-white truncate" id="userName">User Name</p>
+              <p class="text-[10px] text-slate-400" id="userRole">Role</p>
+            </div>
+          </div>
+          <button onclick="handleLogout()" title="Keluar" class="text-slate-400 hover:text-rose-400 p-2 transition">
+            <i data-lucide="log-out" class="w-5 h-5"></i>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- CONTENT WRAPPER -->
+    <main class="flex-1 flex flex-col overflow-y-auto">
+      
+      <!-- Top Bar Mobile -->
+      <header class="md:hidden bg-brand-navy text-white p-4 flex items-center justify-between no-print">
+        <div>
+          <span class="font-bold text-base tracking-wide block">SI-RAKAT</span>
+          <span class="text-[10px] text-slate-300">SRT 9 BANJARBARU</span>
+        </div>
+        <button onclick="toggleMobileSidebar()" class="p-1">
+          <i data-lucide="menu" class="w-6 h-6"></i>
+        </button>
+      </header>
+
+      <!-- TAB 1: DASHBOARD -->
+      <section id="tab-dashboard" class="p-6 space-y-6">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-2xl font-bold text-slate-900">Dashboard Statistik</h2>
+            <p class="text-sm text-slate-500">Ringkasan real-time pengaduan dan insiden siswa.</p>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="switchTab('create')" class="bg-brand-blue hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2.5 rounded-lg flex items-center gap-2 shadow-sm transition">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              <span>Laporan Baru</span>
+            </button>
+            <button onclick="loadDashboardData()" class="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-sm font-semibold px-3 py-2.5 rounded-lg transition" title="Refresh Data">
+              <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Metric Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+            <p class="text-xs font-medium text-slate-400">Total Laporan</p>
+            <h3 class="text-2xl font-bold text-slate-800 mt-1" id="statTotal">0</h3>
+          </div>
+          <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+            <p class="text-xs font-medium text-slate-400">Laporan Hari Ini</p>
+            <h3 class="text-2xl font-bold text-brand-blue mt-1" id="statToday">0</h3>
+          </div>
+          <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+            <p class="text-xs font-medium text-slate-400">Urgensi Tinggi/Darurat</p>
+            <h3 class="text-2xl font-bold text-rose-600 mt-1" id="statUrgent">0</h3>
+          </div>
+          <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+            <p class="text-xs font-medium text-slate-400">Dalam Pemantauan</p>
+            <h3 class="text-2xl font-bold text-amber-600 mt-1" id="statMonitoring">0</h3>
+          </div>
+          <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+            <p class="text-xs font-medium text-slate-400">Dirujuk</p>
+            <h3 class="text-2xl font-bold text-purple-600 mt-1" id="statReferred">0</h3>
+          </div>
+          <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+            <p class="text-xs font-medium text-slate-400">Selesai</p>
+            <h3 class="text-2xl font-bold text-emerald-600 mt-1" id="statCompleted">0</h3>
+          </div>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="bg-white p-5 rounded-xl border border-slate-100 shadow-sm">
+            <h4 class="text-sm font-semibold text-slate-800 mb-4 flex items-center gap-2">
+              <i data-lucide="bar-chart-2" class="w-4 h-4 text-brand-blue"></i> Distribusi Urgensi Insiden
+            </h4>
+            <div class="h-64 relative flex items-center justify-center">
+              <canvas id="chartUrgency"></canvas>
+            </div>
+          </div>
+          <div class="bg-white p-5 rounded-xl border border-slate-100 shadow-sm">
+            <h4 class="text-sm font-semibold text-slate-800 mb-4 flex items-center gap-2">
+              <i data-lucide="pie-chart" class="w-4 h-4 text-brand-blue"></i> Status Penanganan Kasus
+            </h4>
+            <div class="h-64 relative flex items-center justify-center">
+              <canvas id="chartStatus"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Widgets section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="bg-white p-5 rounded-xl border border-slate-100 shadow-sm">
+            <h4 class="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-2 text-rose-600">
+              <i data-lucide="alert-triangle" class="w-4 h-4"></i> Kasus Urgensi Tinggi / Darurat
+            </h4>
+            <div class="space-y-3" id="urgentCasesList">
+              <p class="text-xs text-slate-400">Memuat data...</p>
+            </div>
+          </div>
+          <div class="bg-white p-5 rounded-xl border border-slate-100 shadow-sm">
+            <h4 class="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-2 text-amber-600">
+              <i data-lucide="clock" class="w-4 h-4"></i> Target Tindak Lanjut Mendekati / Terlewati
+            </h4>
+            <div class="space-y-3" id="nearFollowUpList">
+              <p class="text-xs text-slate-400">Memuat data...</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: FORM INPUT / EDIT LAPORAN -->
+      <section id="tab-create" class="p-6 hidden max-w-5xl mx-auto w-full">
+        <div class="mb-6 flex justify-between items-center">
+          <div>
+            <h2 class="text-2xl font-bold text-slate-900" id="formTitle">Formulir Laporan Insiden/Pengaduan</h2>
+            <p class="text-sm text-slate-500">Lengkapi data laporan dengan benar dan terstruktur.</p>
+          </div>
+          <button onclick="resetIncidentForm(); switchTab('incidents');" class="text-slate-500 hover:text-slate-700 text-sm font-medium">Batal</button>
+        </div>
+
+        <form id="incidentForm" onsubmit="handleSaveIncident(event)" class="space-y-6">
+          <input type="hidden" id="incId" value="">
+
+          <!-- SECTION 1 -->
+          <div class="bg-white p-6 rounded-xl border border-slate-100 shadow-sm space-y-4">
+            <div class="flex items-center gap-2 text-brand-navy font-semibold text-base border-b pb-3">
+              <i data-lucide="file-text" class="w-5 h-5 text-brand-blue"></i>
+              <h3>1. Identitas & Ringkasan Kasus</h3>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Nomor Laporan</label>
+                <input type="text" id="incReportNo" disabled class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-500" placeholder="Otomatis oleh sistem">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Tanggal Laporan *</label>
+                <input type="date" id="incReportDate" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-blue/30 focus:outline-none">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Tanggal Kejadian *</label>
+                <input type="date" id="incIncidentDate" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-blue/30 focus:outline-none">
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Ringkasan Insiden / Pengaduan *</label>
+              <textarea id="incSummary" required rows="3" class="w-full border border-slate-200 rounded-lg p-3 text-sm focus:ring-2 focus:ring-brand-blue/30 focus:outline-none" placeholder="Uraikan kronologi atau ringkasan insiden secara jelas..."></textarea>
+            </div>
+          </div>
+
+          <!-- SECTION 2 -->
+          <div class="bg-white p-6 rounded-xl border border-slate-100 shadow-sm space-y-4">
+            <div class="flex items-center gap-2 text-brand-navy font-semibold text-base border-b pb-3">
+              <i data-lucide="alert-circle" class="w-5 h-5 text-brand-blue"></i>
+              <h3>2. Urgensi & Konseling</h3>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Tingkat Urgensi *</label>
+                <select id="incUrgency" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-blue/30 focus:outline-none">
+                  <option value="Rendah">Rendah</option>
+                  <option value="Sedang">Sedang</option>
+                  <option value="Tinggi">Tinggi</option>
+                  <option value="Darurat">Darurat</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Konseling / Pendampingan</label>
+                <select id="incCounselingType" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-blue/30 focus:outline-none">
+                  <option value="Belum Dilaksanakan">Belum Dilaksanakan</option>
+                  <option value="Konseling">Konseling</option>
+                  <option value="Pendampingan">Pendampingan</option>
+                  <option value="Konseling dan Pendampingan">Konseling dan Pendampingan</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Tanggal Konseling</label>
+                <input type="date" id="incCounselingDate" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-blue/30 focus:outline-none">
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Konselor / Pendamping (Pilih Multi)</label>
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                <label class="flex items-center gap-2"><input type="checkbox" name="counselorOpt" value="Pihak Sekolah" class="rounded"> Pihak Sekolah</label>
+                <label class="flex items-center gap-2"><input type="checkbox" name="counselorOpt" value="Keluarga" class="rounded"> Keluarga</label>
+                <label class="flex items-center gap-2"><input type="checkbox" name="counselorOpt" value="Petugas Keamanan" class="rounded"> Petugas Keamanan</label>
+                <label class="flex items-center gap-2"><input type="checkbox" name="counselorOpt" value="Guru" class="rounded"> Guru</label>
+                <label class="flex items-center gap-2"><input type="checkbox" name="counselorOpt" value="Perawat" class="rounded"> Perawat</label>
+                <label class="flex items-center gap-2"><input type="checkbox" name="counselorOpt" value="Wali Asuh" class="rounded"> Wali Asuh</label>
+                <label class="flex items-center gap-2"><input type="checkbox" name="counselorOpt" value="Wali Asrama" class="rounded"> Wali Asrama</label>
+                <label class="flex items-center gap-2"><input type="checkbox" name="counselorOpt" value="Petugas Piket" class="rounded"> Petugas Piket</label>
+                <label class="flex items-center gap-2 col-span-2 md:col-span-1">
+                  <input type="checkbox" id="counselorOtherCheck" onchange="toggleOtherCounselorInput()" class="rounded"> Lainnya...
+                </label>
+              </div>
+              <div id="otherCounselorContainer" class="mt-2 hidden">
+                <input type="text" id="counselorOtherText" placeholder="Ketik nama / posisi pendamping lainnya..." class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-blue/30 focus:outline-none bg-slate-50">
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Hasil Konseling / Pendampingan</label>
+              <textarea id="incCounselingResult" rows="2" class="w-full border border-slate-200 rounded-lg p-3 text-sm focus:ring-2 focus:ring-brand-blue/30 focus:outline-none" placeholder="Catatan hasil proses konseling..."></textarea>
+            </div>
+          </div>
+
+          <!-- SECTION 3 -->
+          <div class="bg-white p-6 rounded-xl border border-slate-100 shadow-sm space-y-4">
+            <div class="flex items-center gap-2 text-brand-navy font-semibold text-base border-b pb-3">
+              <i data-lucide="git-pull-request" class="w-5 h-5 text-brand-blue"></i>
+              <h3>3. Rujukan, Tindak Lanjut & Perlindungan</h3>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Rujukan / Tindak Lanjut</label>
+                <input type="text" id="incReferralAction" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-blue/30 focus:outline-none" placeholder="Langkah rujukan atau tindakan">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Tujuan Rujukan / Penanggung Jawab</label>
+                <input type="text" id="incReferralTarget" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-blue/30 focus:outline-none" placeholder="Instansi luar / Nama Petugas">
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Target / Tanggal Tindak Lanjut</label>
+              <input type="date" id="incFollowUpTargetDate" class="w-full md:w-1/3 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-blue/30 focus:outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Mekanisme Perlindungan Korban/Pelapor</label>
+              <textarea id="incProtectionMechanism" rows="2" class="w-full border border-slate-200 rounded-lg p-3 text-sm focus:ring-2 focus:ring-brand-blue/30 focus:outline-none" placeholder="Rencana perlindungan kerahasiaan / keamanan korban"></textarea>
+            </div>
+          </div>
+
+          <!-- SECTION 4 -->
+          <div class="bg-white p-6 rounded-xl border border-slate-100 shadow-sm space-y-4">
+            <div class="flex items-center gap-2 text-brand-navy font-semibold text-base border-b pb-3">
+              <i data-lucide="check-circle-2" class="w-5 h-5 text-brand-blue"></i>
+              <h3>4. Status & Penutupan Kasus</h3>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Status Penanganan *</label>
+                <select id="incStatus" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-blue/30 focus:outline-none">
+                  <option value="Pemantauan">Pemantauan</option>
+                  <option value="Dirujuk">Dirujuk</option>
+                  <option value="Selesai">Selesai</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Tanggal Selesai</label>
+                <input type="date" id="incEndDate" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-blue/30 focus:outline-none">
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Hasil Akhir / Catatan Pemantauan</label>
+              <textarea id="incFinalNotes" rows="2" class="w-full border border-slate-200 rounded-lg p-3 text-sm focus:ring-2 focus:ring-brand-blue/30 focus:outline-none" placeholder="Catatan evaluasi akhir..."></textarea>
+            </div>
+          </div>
+
+          <div class="flex justify-end gap-3 pt-4">
+            <button type="button" onclick="resetIncidentForm(); switchTab('incidents');" class="px-5 py-2.5 rounded-lg border border-slate-200 text-slate-600 font-semibold text-sm hover:bg-slate-50 transition">Batal</button>
+            <button type="submit" id="btnSaveIncident" class="px-6 py-2.5 rounded-lg bg-brand-blue text-white font-semibold text-sm hover:bg-blue-700 shadow-md shadow-brand-blue/20 transition flex items-center gap-2">
+              <i data-lucide="save" class="w-4 h-4"></i>
+              <span>Simpan Laporan</span>
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- TAB 3: DATA INSIDEN -->
+      <section id="tab-incidents" class="p-6 space-y-4 hidden">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-2xl font-bold text-slate-900">Data Insiden & Pengaduan</h2>
+            <p class="text-sm text-slate-500">Seluruh rekapitulasi data pengaduan siswa terdaftar.</p>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="syncAllData()" class="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-sm font-semibold px-3.5 py-2 rounded-lg flex items-center gap-2 shadow-sm transition">
+              <i data-lucide="refresh-cw" class="w-4 h-4"></i><span>Sinkronkan</span>
+            </button>
+            <button onclick="exportToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-3.5 py-2 rounded-lg flex items-center gap-2 shadow-sm transition">
+              <i data-lucide="download" class="w-4 h-4"></i>
+              <span>Ekspor CSV</span>
+            </button>
+            <button onclick="switchTab('create')" class="bg-brand-blue hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm transition">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              <span>Tambah</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm grid grid-cols-1 md:grid-cols-4 gap-3">
+          <div>
+            <input type="text" id="filterQuery" oninput="applyFilters()" placeholder="Cari No. Laporan / Ringkasan..." class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30">
+          </div>
+          <div>
+            <select id="filterUrgency" onchange="applyFilters()" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30">
+              <option value="">Semua Urgensi</option>
+              <option value="Rendah">Rendah</option>
+              <option value="Sedang">Sedang</option>
+              <option value="Tinggi">Tinggi</option>
+              <option value="Darurat">Darurat</option>
+            </select>
+          </div>
+          <div>
+            <select id="filterStatus" onchange="applyFilters()" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30">
+              <option value="">Semua Status</option>
+              <option value="Pemantauan">Pemantauan</option>
+              <option value="Dirujuk">Dirujuk</option>
+              <option value="Selesai">Selesai</option>
+            </select>
+          </div>
+          <div>
+            <input type="date" id="filterDate" onchange="applyFilters()" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/30">
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-x-auto">
+          <table class="w-full text-left text-sm text-slate-600">
+            <thead class="bg-slate-50 border-b border-slate-100 text-slate-700 font-semibold uppercase text-[11px] tracking-wider">
+              <tr>
+                <th class="px-4 py-3">No. Laporan</th>
+                <th class="px-4 py-3">Tgl Laporan</th>
+                <th class="px-4 py-3">Ringkasan Case</th>
+                <th class="px-4 py-3">Urgensi</th>
+                <th class="px-4 py-3">Pendamping</th>
+                <th class="px-4 py-3">Status</th>
+                <th class="px-4 py-3 text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="incidentsTableBody" class="divide-y divide-slate-100">
+              <tr><td colspan="7" class="text-center py-8 text-slate-400">Memuat data...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- TAB 4: PEMANTAUAN KASUS -->
+      <section id="tab-monitoring" class="p-6 space-y-4 hidden">
+        <div>
+          <h2 class="text-2xl font-bold text-slate-900">Pemantauan Kasus Aktif</h2>
+          <p class="text-sm text-slate-500">Daftar kasus dalam status Pemantauan dan Rujukan.</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="monitoringGrid"></div>
+      </section>
+
+      <!-- TAB 5: RIWAYAT AKTIVITAS -->
+      <section id="tab-logs" class="p-6 space-y-4 hidden">
+        <div>
+          <h2 class="text-2xl font-bold text-slate-900">Riwayat Aktivitas User</h2>
+          <p class="text-sm text-slate-500">Audit trail log aktivitas pembuatan dan pembaruan data.</p>
+        </div>
+        <div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+          <table class="w-full text-left text-sm text-slate-600">
+            <thead class="bg-slate-50 border-b border-slate-100 font-semibold text-xs text-slate-700">
+              <tr>
+                <th class="p-3">Waktu</th>
+                <th class="p-3">User</th>
+                <th class="p-3">Aktivitas</th>
+                <th class="p-3">Keterangan</th>
+              </tr>
+            </thead>
+            <tbody id="logsTableBody" class="divide-y divide-slate-100">
+              <tr><td colspan="4" class="p-4 text-center text-slate-400">Memuat log...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- TAB 6: MANAJEMEN USER -->
+      <section id="tab-users" class="p-6 space-y-6 hidden">
+        <div class="flex justify-between items-center">
+          <div>
+            <h2 class="text-2xl font-bold text-slate-900">Manajemen Pengguna</h2>
+            <p class="text-sm text-slate-500">Kelola akun Admin dan Kesiswaan.</p>
+          </div>
+          <button onclick="openAddUserModal()" class="bg-brand-blue hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm transition">
+            <i data-lucide="user-plus" class="w-4 h-4"></i>
+            <span>Tambah User</span>
+          </button>
+        </div>
+        <div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+          <table class="w-full text-left text-sm text-slate-600">
+            <thead class="bg-slate-50 border-b border-slate-100 font-semibold text-xs text-slate-700">
+              <tr>
+                <th class="p-3">Nama</th>
+                <th class="p-3">Username</th>
+                <th class="p-3">Role</th>
+                <th class="p-3">Status</th>
+                <th class="p-3 text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="usersTableBody" class="divide-y divide-slate-100">
+              <tr><td colspan="5" class="p-4 text-center text-slate-400">Memuat data user...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- JAVASCRIPT APP LOGIC -->
+  <script>
+    if (typeof google === 'undefined' || !google.script || !google.script.run) {
+      const handlers = { success: null, failure: null };
+      const runner = new Proxy({}, {
+        get: function(target, method) {
+          if (method === 'withSuccessHandler') return function(fn) { handlers.success = fn; return runner; };
+          if (method === 'withFailureHandler') return function(fn) { handlers.failure = fn; return runner; };
+          return function() {
+            const error = new Error('Aplikasi belum terhubung ke Google Spreadsheet. Buka melalui URL Web App Google Apps Script yang sudah di-deploy.');
+            setTimeout(function() {
+              if (handlers.failure) handlers.failure(error);
+              else showToast(error.message, 'error');
+            }, 0);
+            return runner;
+          };
+        }
+      });
+      window.google = { script: { run: runner } };
+    }
+
+    let sessionToken = null;
+    let currentUser = null;
+    let globalIncidents = [];
+    let chartUrgencyInstance = null;
+    let chartStatusInstance = null;
+
+    function localDateString(dateValue = new Date()) {
+      const d = new Date(dateValue);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
+    function formatToInputDate(dateVal) {
+      if (!dateVal) return '';
+      const str = String(dateVal).trim();
+      const match = str.match(/^(\d{4}-\d{2}-\d{2})/);
+      if (match) return match[1];
+      const d = new Date(dateVal);
+      return isNaN(d.getTime()) ? '' : localDateString(d);
+    }
+
+    function formatDateOnly(dateVal) {
+      if (!dateVal) return '-';
+      const str = String(dateVal).trim();
+      const match = str.match(/^(\d{4}-\d{2}-\d{2})/);
+      if (match) return match[1];
+      const d = new Date(dateVal);
+      return isNaN(d.getTime()) ? str : localDateString(d);
+    }
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      const bgColors = { success: 'bg-emerald-600 text-white', error: 'bg-rose-600 text-white', info: 'bg-brand-navy text-white' };
+      toast.className = `px-4 py-3 rounded-lg shadow-xl text-sm font-medium flex items-center gap-2 transform transition-all duration-300 pointer-events-auto ${bgColors[type] || bgColors.info}`;
+      toast.textContent = String(message || '');
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+
+    function copyToClipboard(text) {
+      try {
+        const dummy = document.createElement('textarea');
+        document.body.appendChild(dummy);
+        dummy.value = text;
+        dummy.select();
+        document.execCommand('copy');
+        document.body.removeChild(dummy);
+        showToast('Password Hash disalin!', 'info');
+      } catch (err) {
+        showToast('Gagal menyalin teks.', 'error');
+      }
+    }
+
+    function handleLogin(e) {
+      e.preventDefault();
+      const u = document.getElementById('loginUsername').value;
+      const p = document.getElementById('loginPassword').value;
+      const btn = document.getElementById('btnLogin');
+
+      btn.disabled = true;
+      btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>Memproses...</span>`;
+      lucide.createIcons();
+
+      google.script.run
+        .withSuccessHandler(res => {
+          btn.disabled = false;
+          btn.innerHTML = `<span>Masuk Sistem</span><i data-lucide="arrow-right" class="w-4 h-4"></i>`;
+          lucide.createIcons();
+
+          if (res.status === 'success') {
+            sessionToken = res.token;
+            currentUser = res.user;
+
+            document.getElementById('pageLogin').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+
+            document.getElementById('userName').innerText = currentUser.name;
+            document.getElementById('userRole').innerText = currentUser.role;
+            document.getElementById('userAvatar').innerText = currentUser.name.charAt(0).toUpperCase();
+
+            if (currentUser.role === 'Admin') {
+              document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
+            }
+
+            showToast(`Selamat datang, ${currentUser.name}!`, 'success');
+            loadDashboardData();
+            loadIncidentsData();
+          } else {
+            showToast(res.message, 'error');
+          }
+        })
+        .withFailureHandler(err => {
+          btn.disabled = false;
+          btn.innerHTML = `<span>Masuk Sistem</span><i data-lucide="arrow-right" class="w-4 h-4"></i>`;
+          lucide.createIcons();
+          showToast('Terjadi kesalahan jaringan: ' + err.message, 'error');
+        })
+        .loginUser(u, p);
+    }
+
+    function handleLogout() {
+      sessionToken = null;
+      currentUser = null;
+      document.getElementById('mainApp').classList.add('hidden');
+      document.getElementById('pageLogin').classList.remove('hidden');
+      document.getElementById('loginForm').reset();
+      showToast('Berhasil keluar dari sistem.', 'info');
+    }
+
+    function togglePasswordVisibility(id) {
+      const inp = document.getElementById(id);
+      inp.type = inp.type === 'password' ? 'text' : 'password';
+    }
+
+    function switchTab(tabName) {
+      const tabs = ['dashboard', 'create', 'incidents', 'monitoring', 'logs', 'users'];
+      tabs.forEach(t => {
+        const page = document.getElementById(`tab-${t}`);
+        const nav = document.getElementById(`nav-${t}`);
+        if (page) page.classList.add('hidden');
+        if (nav) {
+          nav.classList.remove('bg-brand-blue', 'text-white');
+          nav.classList.add('text-slate-300');
+        }
+      });
+
+      const activePage = document.getElementById(`tab-${tabName}`);
+      const activeNav = document.getElementById(`nav-${tabName}`);
+      if (activePage) activePage.classList.remove('hidden');
+      if (activeNav) {
+        activeNav.classList.add('bg-brand-blue', 'text-white');
+        activeNav.classList.remove('text-slate-300');
+      }
+
+      if (tabName === 'dashboard') loadDashboardData();
+      if (tabName === 'incidents') loadIncidentsData();
+      if (tabName === 'monitoring') renderMonitoringCards();
+      if (tabName === 'logs') loadLogsData();
+      if (tabName === 'users') loadUsersData();
+    }
+
+    function toggleMobileSidebar() {
+      document.getElementById('sidebar').classList.toggle('hidden');
+    }
+
+    function loadDashboardData() {
+      google.script.run
+        .withSuccessHandler(res => {
+          if (res && res.status === 'success') {
+            const summary = res.summary || {};
+            const charts = res.charts || {};
+            const urgentList = Array.isArray(res.urgent) ? res.urgent : [];
+            const nearList = Array.isArray(res.nearFollowUp) ? res.nearFollowUp : [];
+
+            document.getElementById('statTotal').innerText = summary.total || 0;
+            document.getElementById('statToday').innerText = summary.todayCount || 0;
+            document.getElementById('statUrgent').innerText = summary.highUrgency || 0;
+            document.getElementById('statMonitoring').innerText = summary.monitoringCount || 0;
+            document.getElementById('statReferred').innerText = summary.referredCount || 0;
+            document.getElementById('statCompleted').innerText = summary.completedCount || 0;
+
+            renderUrgencyChart(charts.urgency || { 'Rendah': 0, 'Sedang': 0, 'Tinggi': 0, 'Darurat': 0 });
+            renderStatusChart(charts.status || { 'Pemantauan': 0, 'Dirujuk': 0, 'Selesai': 0 });
+
+            const urgentContainer = document.getElementById('urgentCasesList');
+            if (urgentList.length === 0) {
+              urgentContainer.innerHTML = `<p class="text-xs text-slate-400">Tidak ada kasus urgensi tinggi/darurat saat ini.</p>`;
+            } else {
+              urgentContainer.innerHTML = urgentList.map(c => `
+                <div class="p-3 bg-rose-50 border border-rose-100 rounded-lg flex items-center justify-between">
+                  <div>
+                    <span class="font-bold text-xs text-rose-900">${c.reportNo || '-'}</span>
+                    <p class="text-xs text-slate-600 truncate max-w-xs">${c.summary || '-'}</p>
+                  </div>
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-200 text-rose-800">${c.urgency || 'Tinggi'}</span>
+                </div>
+              `).join('');
+            }
+
+            const nearContainer = document.getElementById('nearFollowUpList');
+            if (nearList.length === 0) {
+              nearContainer.innerHTML = `<p class="text-xs text-slate-400">Tidak ada target tindak lanjut terdekat.</p>`;
+            } else {
+              nearContainer.innerHTML = nearList.map(c => `
+                <div class="p-3 bg-amber-50 border border-amber-100 rounded-lg flex items-center justify-between">
+                  <div>
+                    <span class="font-bold text-xs text-amber-800">${c.reportNo || '-'}</span>
+                    <p class="text-xs text-slate-600 truncate max-w-xs">Target: ${c.targetDate ? formatDateOnly(c.targetDate) : '-'}</p>
+                  </div>
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-200 text-amber-900">${c.diffDays < 0 ? 'Terlewati' : 'Segera'}</span>
+                </div>
+              `).join('');
+            }
+          }
+        })
+        .withFailureHandler(err => showToast('Dashboard gagal disinkronkan: ' + (err ? err.message : ''), 'error'))
+        .getDashboardStatistics(sessionToken);
+    }
+
+    function renderUrgencyChart(data) {
+      const ctx = document.getElementById('chartUrgency').getContext('2d');
+      if (chartUrgencyInstance) chartUrgencyInstance.destroy();
+      chartUrgencyInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Rendah', 'Sedang', 'Tinggi', 'Darurat'],
+          datasets: [{ data: [data['Rendah'] || 0, data['Sedang'] || 0, data['Tinggi'] || 0, data['Darurat'] || 0], backgroundColor: ['#94A3B8', '#F59E0B', '#EF4444', '#991B1B'], borderRadius: 6 }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+      });
+    }
+
+    function renderStatusChart(data) {
+      const ctx = document.getElementById('chartStatus').getContext('2d');
+      if (chartStatusInstance) chartStatusInstance.destroy();
+      chartStatusInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Pemantauan', 'Dirujuk', 'Selesai'],
+          datasets: [{ data: [data['Pemantauan'] || 0, data['Dirujuk'] || 0, data['Selesai'] || 0], backgroundColor: ['#D97706', '#9333EA', '#10B981'] }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+    }
+
+    function handleSaveIncident(e) {
+      e.preventDefault();
+      const id = document.getElementById('incId').value;
+      const counselors = Array.from(document.querySelectorAll('input[name="counselorOpt"]:checked')).map(cb => cb.value);
+
+      const otherCheck = document.getElementById('counselorOtherCheck');
+      const otherText = document.getElementById('counselorOtherText').value.trim();
+      if (otherCheck && otherCheck.checked && otherText) {
+        counselors.push(otherText);
+      }
+
+      const formData = {
+        id: id,
+        reportNo: document.getElementById('incReportNo').value,
+        reportDate: document.getElementById('incReportDate').value,
+        incidentDate: document.getElementById('incIncidentDate').value,
+        summary: document.getElementById('incSummary').value,
+        urgency: document.getElementById('incUrgency').value,
+        counselingType: document.getElementById('incCounselingType').value,
+        counselingDate: document.getElementById('incCounselingDate').value,
+        counselor: counselors,
+        counselingResult: document.getElementById('incCounselingResult').value,
+        referralAction: document.getElementById('incReferralAction').value,
+        referralTarget: document.getElementById('incReferralTarget').value,
+        followUpTargetDate: document.getElementById('incFollowUpTargetDate').value,
+        protectionMechanism: document.getElementById('incProtectionMechanism').value,
+        status: document.getElementById('incStatus').value,
+        endDate: document.getElementById('incEndDate').value,
+        finalNotes: document.getElementById('incFinalNotes').value
+      };
+
+      const btn = document.getElementById('btnSaveIncident');
+      btn.disabled = true;
+      const originalBtnHTML = btn.innerHTML;
+      btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>Menyimpan...</span>`;
+      lucide.createIcons();
+
+      if (id) {
+        google.script.run
+          .withSuccessHandler(res => handleSaveIncidentSuccess(res, btn, originalBtnHTML))
+          .withFailureHandler(err => handleSaveIncidentFailure(err, btn, originalBtnHTML))
+          .updateIncident(formData, sessionToken);
+      } else {
+        google.script.run
+          .withSuccessHandler(res => handleSaveIncidentSuccess(res, btn, originalBtnHTML))
+          .withFailureHandler(err => handleSaveIncidentFailure(err, btn, originalBtnHTML))
+          .addIncident(formData, sessionToken);
+      }
+    }
+
+    function handleSaveIncidentSuccess(res, btn, originalBtnHTML) {
+      btn.disabled = false;
+      btn.innerHTML = originalBtnHTML;
+      lucide.createIcons();
+
+      if (res && res.status === 'success') {
+        showToast(res.message, 'success');
+        resetIncidentForm();
+        switchTab('incidents');
+        loadDashboardData();
+      } else {
+        showToast(res ? res.message : 'Gagal menyimpan laporan.', 'error');
+      }
+    }
+
+    function handleSaveIncidentFailure(err, btn, originalBtnHTML) {
+      btn.disabled = false;
+      btn.innerHTML = originalBtnHTML;
+      lucide.createIcons();
+      showToast('Gagal menyimpan: ' + (err ? err.message : 'Kesalahan jaringan'), 'error');
+    }
+
+    function toggleOtherCounselorInput() {
+      const chk = document.getElementById('counselorOtherCheck');
+      const container = document.getElementById('otherCounselorContainer');
+      const input = document.getElementById('counselorOtherText');
+      if (chk.checked) {
+        container.classList.remove('hidden');
+        input.focus();
+      } else {
+        container.classList.add('hidden');
+        input.value = '';
+      }
+    }
+
+    function resetIncidentForm() {
+      document.getElementById('incidentForm').reset();
+      document.getElementById('incId').value = '';
+      document.getElementById('incReportNo').value = '';
+      document.getElementById('formTitle').innerText = 'Formulir Laporan Insiden/Pengaduan';
+      document.getElementById('incReportDate').value = localDateString();
+      
+      const otherContainer = document.getElementById('otherCounselorContainer');
+      if (otherContainer) otherContainer.classList.add('hidden');
+      const otherCheck = document.getElementById('counselorOtherCheck');
+      if (otherCheck) otherCheck.checked = false;
+      const otherText = document.getElementById('counselorOtherText');
+      if (otherText) otherText.value = '';
+    }
+
+    function loadIncidentsData() {
+      google.script.run
+        .withSuccessHandler(res => {
+          if (res && res.status === 'success') {
+            globalIncidents = Array.isArray(res.data) ? res.data : [];
+            applyFilters();
+            if (!document.getElementById('tab-monitoring').classList.contains('hidden')) renderMonitoringCards();
+          } else {
+            globalIncidents = [];
+            applyFilters();
+            if (res && res.message) showToast(res.message, 'error');
+          }
+        })
+        .withFailureHandler(err => {
+          applyFilters();
+          showToast('Gagal memuat data dari Spreadsheet: ' + (err ? err.message : ''), 'error');
+        })
+        .getAllIncidents(sessionToken);
+    }
+
+    function applyFilters() {
+      const q = document.getElementById('filterQuery').value.toLowerCase();
+      const u = document.getElementById('filterUrgency').value;
+      const s = document.getElementById('filterStatus').value;
+      const d = document.getElementById('filterDate').value;
+
+      const safeList = Array.isArray(globalIncidents) ? globalIncidents : [];
+      const filtered = safeList.filter(item => {
+        if (!item) return false;
+        const repDateFormatted = formatDateOnly(item.reportDate);
+        const matchQ = (item.reportNo || '').toLowerCase().includes(q) || (item.summary || '').toLowerCase().includes(q);
+        const matchU = !u || item.urgency === u;
+        const matchS = !s || item.status === s;
+        const matchD = !d || repDateFormatted === d;
+        return matchQ && matchU && matchS && matchD;
+      });
+
+      renderIncidentsTable(filtered);
+    }
+
+    function renderIncidentsTable(data) {
+      const tbody = document.getElementById('incidentsTableBody');
+      if (!data || data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-slate-400">Tidak ada data ditemukan dalam database Spreadsheet.</td></tr>`;
+        return;
+      }
+
+      const urgencyBadges = {
+        'Rendah': 'bg-slate-100 text-slate-700',
+        'Sedang': 'bg-amber-100 text-amber-800',
+        'Tinggi': 'bg-rose-100 text-rose-800',
+        'Darurat': 'bg-red-600 text-white font-bold'
+      };
+
+      const statusBadges = {
+        'Pemantauan': 'bg-amber-50 text-amber-700 border border-amber-200',
+        'Dirujuk': 'bg-purple-50 text-purple-700 border border-purple-200',
+        'Selesai': 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+      };
+
+      tbody.innerHTML = data.map(item => `
+        <tr class="hover:bg-slate-50 transition">
+          <td class="px-4 py-3 font-semibold text-slate-800">${item.reportNo || '-'}</td>
+          <td class="px-4 py-3 text-xs">${formatDateOnly(item.reportDate)}</td>
+          <td class="px-4 py-3 text-xs max-w-xs truncate" title="${item.summary || ''}">${item.summary || '-'}</td>
+          <td class="px-4 py-3 text-xs"><span class="px-2 py-1 rounded-md text-[11px] ${urgencyBadges[item.urgency] || 'bg-slate-100'}">${item.urgency || 'Rendah'}</span></td>
+          <td class="px-4 py-3 text-xs max-w-xs truncate">${item.counselor || '-'}</td>
+          <td class="px-4 py-3 text-xs"><span class="px-2 py-1 rounded-md text-[11px] ${statusBadges[item.status] || ''}">${item.status || 'Pemantauan'}</span></td>
+          <td class="px-4 py-3 text-xs text-right space-x-1">
+            <button onclick="viewIncidentDetail('${item.id}')" class="p-1.5 text-slate-500 hover:text-brand-blue" title="Detail"><i data-lucide="eye" class="w-4 h-4"></i></button>
+            <button onclick="printIncidentPDF('${item.id}')" class="p-1.5 text-slate-500 hover:text-emerald-600" title="Cetak PDF"><i data-lucide="printer" class="w-4 h-4"></i></button>
+            <button onclick="editIncident('${item.id}')" class="p-1.5 text-slate-500 hover:text-amber-600" title="Edit"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+            ${currentUser && currentUser.role === 'Admin' ? `<button onclick="confirmDeleteIncident('${item.id}')" class="p-1.5 text-slate-500 hover:text-rose-600" title="Hapus"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
+          </td>
+        </tr>
+      `).join('');
+
+      lucide.createIcons();
+    }
+
+    function printIncidentPDF(id) {
+      let item = globalIncidents.find(x => String(x.id) === String(id));
+      if (!item) {
+        google.script.run
+          .withSuccessHandler(res => {
+            if (res.status === 'success' && res.data) {
+              globalIncidents = res.data;
+              item = globalIncidents.find(x => String(x.id) === String(id));
+              if (item) triggerPrintDocument(item);
+            }
+          })
+          .getAllIncidents(sessionToken);
+      } else {
+        triggerPrintDocument(item);
+      }
+    }
+
+    function triggerPrintDocument(item) {
+      const reportHtml = `
+        <!DOCTYPE html>
+        <html lang="id">
+        <head>
+          <meta charset="UTF-8">
+          <title>Laporan Insiden - ${item.reportNo}</title>
+          <script src="https://cdn.tailwindcss.com"><\/script>
+          <style>
+            @page { size: A4; margin: 15mm; }
+            body { font-family: 'sans-serif'; color: #1e293b; background: white; }
+            @media print { .no-print { display: none !important; } }
+          </style>
+        </head>
+        <body class="p-8">
+          <div class="border-b-4 border-double border-slate-900 pb-3 mb-6">
+            <div class="flex items-center justify-between gap-4">
+              <div class="w-16 flex-shrink-0 flex items-center justify-center">
+                <img src="https://lh3.googleusercontent.com/d/1GVzZ8qXw0Ig8L90u21w72rv7QCXDsf4e" onerror="this.src='https://placehold.co/70x70/172554/ffffff?text=KEMENSOS'" alt="Logo Kemensos" class="w-12 h-12 object-contain" />
+              </div>
+              <div class="text-center flex-1">
+                <h1 class="font-bold text-slate-900 uppercase leading-tight" style="font-size: 9pt;">KEMENTERIAN SOSIAL REPUBLIK INDONESIA</h1>
+                <h2 class="font-semibold text-slate-800 uppercase leading-tight mt-0.5" style="font-size: 7pt;">PUSAT PENDIDIKAN, PELATIHAN DAN PENGEMBANGAN PROFESI KESEJAHTERAAN SOSIAL</h2>
+                <h3 class="font-bold text-blue-950 uppercase leading-tight mt-0.5" style="font-size: 10pt;">SEKOLAH RAKYAT TERINTEGRASI 9 BANJARBARU</h3>
+                <p class="text-slate-600 mt-0.5 leading-tight" style="font-size: 6pt;">Jalan Trikora, RT. 23 RW. 05, Guntung Manggis, Kota Banjarbaru 70724, https://sekolahrakyat.kemensos.go.id</p>
+              </div>
+              <div class="w-16 flex-shrink-0"></div>
+            </div>
+            <div class="mt-3 pt-2 border-t border-slate-300 flex justify-between items-center text-xs">
+              <span class="font-bold text-blue-900 uppercase tracking-wide">SI-RAKAT - LEMBAR DOKUMENTASI LAPORAN</span>
+              <span class="font-mono font-bold bg-slate-100 px-3 py-1 rounded border border-slate-300 text-slate-900">No: ${item.reportNo}</span>
+            </div>
+          </div>
+
+          <div class="space-y-5 text-sm">
+            <div class="border border-slate-200 rounded-lg p-4 bg-slate-50">
+              <h3 class="font-bold text-slate-900 text-xs uppercase tracking-wider mb-2 border-b border-slate-200 pb-1">1. Identitas & Ringkasan Kasus</h3>
+              <div class="grid grid-cols-2 gap-3 text-xs mb-3">
+                <div><span class="text-slate-500">Tanggal Laporan:</span> <strong class="text-slate-800">${formatDateOnly(item.reportDate)}</strong></div>
+                <div><span class="text-slate-500">Tanggal Kejadian:</span> <strong class="text-slate-800">${formatDateOnly(item.incidentDate)}</strong></div>
+              </div>
+              <div class="text-xs text-slate-800 bg-white p-3 rounded border border-slate-200">
+                <span class="font-semibold text-slate-700 block mb-1">Ringkasan Kejadian:</span>
+                <p class="whitespace-pre-line">${item.summary || '-'}</p>
+              </div>
+            </div>
+
+            <div class="border border-slate-200 rounded-lg p-4 bg-slate-50">
+              <h3 class="font-bold text-slate-900 text-xs uppercase tracking-wider mb-2 border-b border-slate-200 pb-1">2. Urgensi & Pendampingan</h3>
+              <div class="grid grid-cols-2 gap-3 text-xs mb-3">
+                <div><span class="text-slate-500">Tingkat Urgensi:</span> <strong class="text-slate-800 font-bold">${item.urgency || '-'}</strong></div>
+                <div><span class="text-slate-500">Bentuk Pendampingan:</span> <strong class="text-slate-800">${item.counselingType || '-'}</strong></div>
+                <div><span class="text-slate-500">Tanggal Konseling:</span> <strong class="text-slate-800">${formatDateOnly(item.counselingDate)}</strong></div>
+                <div><span class="text-slate-500">Konselor / Pendamping:</span> <strong class="text-slate-800">${item.counselor || '-'}</strong></div>
+              </div>
+              <div class="text-xs text-slate-800 bg-white p-3 rounded border border-slate-200">
+                <span class="font-semibold text-slate-700 block mb-1">Hasil Konseling / Pendampingan:</span>
+                <p class="whitespace-pre-line">${item.counselingResult || '-'}</p>
+              </div>
+            </div>
+
+            <div class="border border-slate-200 rounded-lg p-4 bg-slate-50">
+              <h3 class="font-bold text-slate-900 text-xs uppercase tracking-wider mb-2 border-b border-slate-200 pb-1">3. Rujukan, Tindak Lanjut & Perlindungan</h3>
+              <div class="grid grid-cols-2 gap-3 text-xs mb-3">
+                <div><span class="text-slate-500">Rujukan / Tindak Lanjut:</span> <strong class="text-slate-800">${item.referralAction || '-'}</strong></div>
+                <div><span class="text-slate-500">Tujuan Rujukan / Penanggung Jawab:</span> <strong class="text-slate-800">${item.referralTarget || '-'}</strong></div>
+                <div><span class="text-slate-500">Target Tanggal Tindak Lanjut:</span> <strong class="text-slate-800">${formatDateOnly(item.followUpTargetDate)}</strong></div>
+              </div>
+              <div class="text-xs text-slate-800 bg-white p-3 rounded border border-slate-200">
+                <span class="font-semibold text-slate-700 block mb-1">Mekanisme Perlindungan Korban/Pelapor:</span>
+                <p class="whitespace-pre-line">${item.protectionMechanism || '-'}</p>
+              </div>
+            </div>
+
+            <div class="border border-slate-200 rounded-lg p-4 bg-slate-50">
+              <h3 class="font-bold text-slate-900 text-xs uppercase tracking-wider mb-2 border-b border-slate-200 pb-1">4. Status & Evaluasi Penutupan</h3>
+              <div class="grid grid-cols-2 gap-3 text-xs mb-3">
+                <div><span class="text-slate-500">Status Akhir:</span> <strong class="text-slate-800 font-bold">${item.status || '-'}</strong></div>
+                <div><span class="text-slate-500">Tanggal Selesai:</span> <strong class="text-slate-800">${formatDateOnly(item.endDate)}</strong></div>
+              </div>
+              <div class="text-xs text-slate-800 bg-white p-3 rounded border border-slate-200">
+                <span class="font-semibold text-slate-700 block mb-1">Hasil Akhir / Catatan Pemantauan:</span>
+                <p class="whitespace-pre-line">${item.finalNotes || '-'}</p>
+              </div>
+            </div>
+
+            <div class="pt-8 grid grid-cols-2 text-center text-xs mt-8">
+              <div>
+                <p class="text-slate-600">Petugas Pelapor / Konselor</p>
+                <div class="h-20"></div>
+                <p class="font-bold border-t border-slate-400 inline-block px-10 text-slate-900">( ${item.createdBy || 'Petugas Kesiswaan'} )</p>
+              </div>
+              <div>
+                <p class="text-slate-600">Banjarbaru, ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}<br>Tim Kesiswaan / Guru BK</p>
+                <div class="h-20"></div>
+                <p class="font-bold border-t border-slate-400 inline-block px-10 text-slate-900">( SRT 9 Banjarbaru )</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg no-print flex justify-between items-center">
+            <span class="text-xs text-blue-900 font-medium">Klik tombol untuk mencetak atau menyimpan dokumen sebagai PDF.</span>
+            <button onclick="window.print()" class="px-5 py-2.5 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 shadow">Cetak / Simpan PDF</button>
+          </div>
+
+          <script>window.onload = function() { setTimeout(function() { window.print(); }, 500); };<\/script>
+        </body>
+        </html>
+      `;
+      try {
+        const pw = window.open('', '_blank');
+        if (pw) { pw.document.write(reportHtml); pw.document.close(); }
+        else { viewIncidentDetail(item.id); setTimeout(() => window.print(), 400); }
+      } catch (e) {
+        viewIncidentDetail(item.id);
+        setTimeout(() => window.print(), 400);
+      }
+    }
+
+    function viewIncidentDetail(id) {
+      const item = globalIncidents.find(x => String(x.id) === String(id));
+      if (!item) return;
+
+      const overlay = document.getElementById('modalOverlay');
+      const content = document.getElementById('modalContent');
+
+      content.innerHTML = `
+        <div class="border-b-4 border-double border-slate-900 pb-3 mb-4 relative">
+          <button onclick="closeModal()" class="absolute -top-2 right-0 text-slate-400 hover:text-slate-600 no-print"><i data-lucide="x" class="w-6 h-6"></i></button>
+          <div class="flex items-center justify-between gap-3 pr-8">
+            <div class="w-16 flex-shrink-0 flex items-center justify-center">
+              <img src="https://lh3.googleusercontent.com/d/1GVzZ8qXw0Ig8L90u21w72rv7QCXDsf4e" onerror="this.src='https://placehold.co/60x60/172554/ffffff?text=KEMENSOS'" alt="Logo Kemensos" class="w-12 h-12 object-contain" />
+            </div>
+            <div class="text-center flex-1">
+              <h1 class="font-bold text-slate-900 uppercase leading-tight" style="font-size: 9pt;">KEMENTERIAN SOSIAL REPUBLIK INDONESIA</h1>
+              <h2 class="font-semibold text-slate-800 uppercase leading-tight" style="font-size: 7pt;">PUSAT PENDIDIKAN, PELATIHAN DAN PENGEMBANGAN PROFESI KESEJAHTERAAN SOSIAL</h2>
+              <h3 class="font-bold text-blue-950 uppercase leading-tight" style="font-size: 10pt;">SEKOLAH RAKYAT TERINTEGRASI 9 BANJARBARU</h3>
+              <p class="text-slate-600 mt-0.5 leading-tight" style="font-size: 6pt;">Jalan Trikora, RT. 23 RW. 05, Guntung Manggis, Kota Banjarbaru 70724, https://sekolahrakyat.kemensos.go.id</p>
+            </div>
+          </div>
+          <div class="mt-3 pt-2 border-t border-slate-300 flex justify-between items-center text-xs">
+            <span class="font-bold text-brand-blue uppercase tracking-wide">SI-RAKAT - LEMBAR DOKUMENTASI LAPORAN</span>
+            <span class="font-mono font-bold bg-slate-100 px-2 py-0.5 rounded border border-slate-200 text-slate-800">No. ${item.reportNo}</span>
+          </div>
+        </div>
+
+        <div class="space-y-4 text-sm max-h-[65vh] overflow-y-auto pr-2">
+          <div class="border border-slate-200 rounded-lg p-3 bg-slate-50/50">
+            <h4 class="font-bold text-slate-800 text-xs uppercase tracking-wider mb-2 text-brand-navy border-b pb-1">1. Identitas & Ringkasan Kasus</h4>
+            <div class="grid grid-cols-2 gap-2 text-xs mb-2">
+              <div><strong>Tanggal Laporan:</strong> ${formatDateOnly(item.reportDate)}</div>
+              <div><strong>Tanggal Kejadian:</strong> ${formatDateOnly(item.incidentDate)}</div>
+            </div>
+            <p class="text-xs text-slate-800 bg-white p-2.5 rounded border border-slate-200"><strong>Ringkasan:</strong> ${item.summary || '-'}</p>
+          </div>
+
+          <div class="border border-slate-200 rounded-lg p-3 bg-slate-50/50">
+            <h4 class="font-bold text-slate-800 text-xs uppercase tracking-wider mb-2 text-brand-navy border-b pb-1">2. Urgensi & Pendampingan</h4>
+            <div class="grid grid-cols-2 gap-2 text-xs mb-2">
+              <div><strong>Tingkat Urgensi:</strong> <span class="font-bold">${item.urgency || '-'}</span></div>
+              <div><strong>Jenis Pendampingan:</strong> ${item.counselingType || '-'}</div>
+              <div><strong>Tgl Konseling:</strong> ${formatDateOnly(item.counselingDate)}</div>
+              <div><strong>Pendamping:</strong> ${item.counselor || '-'}</div>
+            </div>
+            <p class="text-xs text-slate-800 bg-white p-2.5 rounded border border-slate-200"><strong>Hasil Pendampingan:</strong> ${item.counselingResult || '-'}</p>
+          </div>
+
+          <div class="border border-slate-200 rounded-lg p-3 bg-slate-50/50">
+            <h4 class="font-bold text-slate-800 text-xs uppercase tracking-wider mb-2 text-brand-navy border-b pb-1">3. Rujukan & Perlindungan</h4>
+            <div class="grid grid-cols-2 gap-2 text-xs mb-2">
+              <div><strong>Rujukan/Tindak Lanjut:</strong> ${item.referralAction || '-'}</div>
+              <div><strong>Tujuan Rujukan:</strong> ${item.referralTarget || '-'}</div>
+              <div><strong>Target Tindak Lanjut:</strong> ${formatDateOnly(item.followUpTargetDate)}</div>
+            </div>
+            <p class="text-xs text-slate-800 bg-white p-2.5 rounded border border-slate-200"><strong>Mekanisme Perlindungan:</strong> ${item.protectionMechanism || '-'}</p>
+          </div>
+
+          <div class="border border-slate-200 rounded-lg p-3 bg-slate-50/50">
+            <h4 class="font-bold text-slate-800 text-xs uppercase tracking-wider mb-2 text-brand-navy border-b pb-1">4. Status & Evaluasi Akhir</h4>
+            <div class="grid grid-cols-2 gap-2 text-xs mb-2">
+              <div><strong>Status Akhir:</strong> <span class="font-bold text-emerald-700">${item.status || '-'}</span></div>
+              <div><strong>Tanggal Selesai:</strong> ${formatDateOnly(item.endDate)}</div>
+            </div>
+            <p class="text-xs text-slate-800 bg-white p-2.5 rounded border border-slate-200"><strong>Catatan Evaluasi:</strong> ${item.finalNotes || '-'}</p>
+          </div>
+        </div>
+
+        <div class="mt-6 flex justify-end gap-2 border-t pt-4 no-print">
+          <button onclick="triggerPrintDocument(globalIncidents.find(x => String(x.id) === String('${item.id}')))" class="px-4 py-2 bg-brand-blue text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm hover:bg-blue-700"><i data-lucide="printer" class="w-4 h-4"></i> Cetak Dokumen PDF</button>
+          <button onclick="closeModal()" class="px-4 py-2 border text-slate-600 rounded-lg text-xs font-semibold hover:bg-slate-50">Tutup</button>
+        </div>
+      `;
+
+      overlay.classList.remove('hidden');
+      setTimeout(() => content.classList.remove('scale-95', 'opacity-0'), 10);
+      lucide.createIcons();
+    }
+
+    function closeModal() {
+      const overlay = document.getElementById('modalOverlay');
+      const content = document.getElementById('modalContent');
+      content.classList.add('scale-95', 'opacity-0');
+      setTimeout(() => overlay.classList.add('hidden'), 200);
+    }
+
+    function editIncident(id) {
+      const item = globalIncidents.find(x => String(x.id) === String(id));
+      if (!item) return;
+
+      switchTab('create');
+      document.getElementById('formTitle').innerText = 'Edit Laporan Insiden/Pengaduan';
+      document.getElementById('incId').value = item.id;
+      document.getElementById('incReportNo').value = item.reportNo || '';
+      document.getElementById('incReportDate').value = formatToInputDate(item.reportDate);
+      document.getElementById('incIncidentDate').value = formatToInputDate(item.incidentDate);
+      document.getElementById('incSummary').value = item.summary || '';
+      document.getElementById('incUrgency').value = item.urgency || 'Rendah';
+      document.getElementById('incCounselingType').value = item.counselingType || 'Belum Dilaksanakan';
+      document.getElementById('incCounselingDate').value = formatToInputDate(item.counselingDate);
+      
+      const existingCounselors = (item.counselor || '').split(',').map(s => s.trim());
+      const defaultOptions = ['Pihak Sekolah', 'Keluarga', 'Petugas Keamanan', 'Guru', 'Perawat', 'Wali Asuh', 'Wali Asrama', 'Petugas Piket'];
+      
+      document.querySelectorAll('input[name="counselorOpt"]').forEach(cb => {
+        cb.checked = existingCounselors.includes(cb.value);
+      });
+
+      const customCounselor = existingCounselors.find(c => c && !defaultOptions.includes(c));
+      const otherCheck = document.getElementById('counselorOtherCheck');
+      const otherContainer = document.getElementById('otherCounselorContainer');
+      const otherText = document.getElementById('counselorOtherText');
+
+      if (customCounselor) {
+        if (otherCheck) otherCheck.checked = true;
+        if (otherContainer) otherContainer.classList.remove('hidden');
+        if (otherText) otherText.value = customCounselor;
+      } else {
+        if (otherCheck) otherCheck.checked = false;
+        if (otherContainer) otherContainer.classList.add('hidden');
+        if (otherText) otherText.value = '';
+      }
+
+      document.getElementById('incCounselingResult').value = item.counselingResult || '';
+      document.getElementById('incReferralAction').value = item.referralAction || '';
+      document.getElementById('incReferralTarget').value = item.referralTarget || '';
+      document.getElementById('incFollowUpTargetDate').value = formatToInputDate(item.followUpTargetDate);
+      document.getElementById('incProtectionMechanism').value = item.protectionMechanism || '';
+      document.getElementById('incStatus').value = item.status || 'Pemantauan';
+      document.getElementById('incEndDate').value = formatToInputDate(item.endDate);
+      document.getElementById('incFinalNotes').value = item.finalNotes || '';
+    }
+
+    function confirmDeleteIncident(id) {
+      if (!confirm('Apakah Anda yakin ingin menghapus data laporan ini?')) return;
+      google.script.run
+        .withSuccessHandler(res => {
+          if (res.status === 'success') {
+            showToast(res.message, 'success');
+            loadIncidentsData();
+          } else {
+            showToast(res.message, 'error');
+          }
+        })
+        .deleteIncident(id, sessionToken);
+    }
+
+    let globalUsers = [];
+
+    function loadUsersData() {
+      google.script.run
+        .withSuccessHandler(res => {
+          if (res.status === 'success') {
+            globalUsers = res.data || [];
+            const tbody = document.getElementById('usersTableBody');
+            if (globalUsers.length === 0) {
+              tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400">Belum ada data pengguna.</td></tr>`;
+              return;
+            }
+
+            tbody.innerHTML = globalUsers.map(u => `
+              <tr class="hover:bg-slate-50">
+                <td class="p-3 font-semibold text-slate-800">${u.name}</td>
+                <td class="p-3 text-xs">${u.username}</td>
+                <td class="p-3 text-xs">${u.role}</td>
+                <td class="p-3 text-xs"><span class="px-2 py-0.5 rounded ${u.status === 'Aktif' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">${u.status}</span></td>
+                <td class="p-3 text-xs text-right space-x-1">
+                  <button onclick="viewUserDetail('${u.id}')" class="p-1.5 text-slate-500 hover:text-brand-blue" title="Lihat User"><i data-lucide="eye" class="w-4 h-4"></i></button>
+                  <button onclick="openEditUserModal('${u.id}')" class="p-1.5 text-slate-500 hover:text-amber-600" title="Edit User"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                  ${u.username !== 'admin' ? `
+                    <button onclick="toggleUserStatus('${u.id}', '${u.status === 'Aktif' ? 'Nonaktif' : 'Aktif'}')" class="p-1.5 text-slate-500 hover:text-purple-600" title="${u.status === 'Aktif' ? 'Nonaktifkan' : 'Aktifkan'}"><i data-lucide="${u.status === 'Aktif' ? 'user-x' : 'user-check'}" class="w-4 h-4"></i></button>
+                    <button onclick="confirmDeleteUser('${u.id}', '${u.username}')" class="p-1.5 text-slate-500 hover:text-rose-600" title="Hapus User"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                  ` : ''}
+                </td>
+              </tr>
+            `).join('');
+            lucide.createIcons();
+          }
+        })
+        .getAllUsers(sessionToken);
+    }
+
+    function viewUserDetail(userId) {
+      const user = globalUsers.find(u => String(u.id) === String(userId));
+      if (!user) return;
+
+      const overlay = document.getElementById('modalOverlay');
+      const content = document.getElementById('modalContent');
+      const displayHash = user.passwordHash || '(Terenkripsi SHA-256)';
+
+      content.innerHTML = `
+        <div class="flex justify-between items-center border-b pb-3 mb-4">
+          <h3 class="text-lg font-bold text-slate-900">Detail Pengguna</h3>
+          <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+        </div>
+        <div class="space-y-3 text-sm">
+          <div class="flex justify-between border-b pb-2"><span class="text-slate-500">ID User:</span><span class="font-mono text-xs font-semibold text-slate-700">${user.id}</span></div>
+          <div class="flex justify-between border-b pb-2"><span class="text-slate-500">Nama Lengkap:</span><span class="font-semibold text-slate-800">${user.name}</span></div>
+          <div class="flex justify-between border-b pb-2"><span class="text-slate-500">Username:</span><span class="font-semibold text-slate-800">${user.username}</span></div>
+          <div class="flex justify-between border-b pb-2 items-center">
+            <span class="text-slate-500">Password (Hash Security):</span>
+            <div class="flex items-center gap-1.5 max-w-[240px] truncate">
+              <span class="font-mono text-[11px] text-slate-600 bg-slate-100 px-2 py-1 rounded border truncate" title="${displayHash}">${displayHash}</span>
+              <button onclick="copyToClipboard('${displayHash}')" title="Salin Hash" class="text-slate-400 hover:text-slate-600"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
+            </div>
+          </div>
+          <div class="flex justify-between border-b pb-2"><span class="text-slate-500">Role Hak Akses:</span><span class="px-2 py-0.5 rounded text-xs bg-blue-100 text-blue-800 font-semibold">${user.role}</span></div>
+          <div class="flex justify-between border-b pb-2"><span class="text-slate-500">Status Akun:</span><span class="px-2 py-0.5 rounded text-xs ${user.status === 'Aktif' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'} font-semibold">${user.status}</span></div>
+          <div class="flex justify-between pb-2"><span class="text-slate-500">Waktu Dibuat:</span><span class="text-xs text-slate-600">${user.createdAt ? new Date(user.createdAt).toLocaleString('id-ID') : '-'}</span></div>
+        </div>
+        <div class="flex justify-end gap-2 pt-4 border-t mt-4"><button type="button" onclick="closeModal()" class="px-4 py-2 border text-slate-600 rounded-lg text-xs font-semibold">Tutup</button></div>
+      `;
+
+      overlay.classList.remove('hidden');
+      setTimeout(() => content.classList.remove('scale-95', 'opacity-0'), 10);
+      lucide.createIcons();
+    }
+
+    function openEditUserModal(userId) {
+      const user = globalUsers.find(u => String(u.id) === String(userId));
+      if (!user) return;
+
+      const overlay = document.getElementById('modalOverlay');
+      const content = document.getElementById('modalContent');
+
+      content.innerHTML = `
+        <div class="flex justify-between items-center border-b pb-3 mb-4">
+          <h3 class="text-lg font-bold text-slate-900">Edit Data Pengguna</h3>
+          <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+        </div>
+        <form onsubmit="handleUpdateUser(event, '${user.id}')" class="space-y-4">
+          <div><label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Nama Lengkap</label><input type="text" id="editAccName" value="${user.name}" required class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-blue/30 focus:outline-none"></div>
+          <div><label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Username</label><input type="text" id="editAccUsername" value="${user.username}" ${user.username === 'admin' ? 'disabled' : ''} required class="w-full border rounded-lg px-3 py-2 text-sm ${user.username === 'admin' ? 'bg-slate-100 text-slate-500' : ''}"></div>
+          <div><label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Password Baru (Opsional)</label><input type="password" id="editAccPassword" placeholder="Kosongkan jika tidak diubah" class="w-full border rounded-lg px-3 py-2 text-sm"></div>
+          <div><label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Role</label><select id="editAccRole" ${user.username === 'admin' ? 'disabled' : ''} class="w-full border rounded-lg px-3 py-2 text-sm ${user.username === 'admin' ? 'bg-slate-100 text-slate-500' : ''}"><option value="Kesiswaan" ${user.role === 'Kesiswaan' ? 'selected' : ''}>Kesiswaan</option><option value="Admin" ${user.role === 'Admin' ? 'selected' : ''}>Admin</option></select></div>
+          <div class="flex justify-end gap-2 pt-3 border-t"><button type="button" onclick="closeModal()" class="px-4 py-2 border text-slate-600 rounded-lg text-xs font-semibold">Batal</button><button type="submit" class="px-4 py-2 bg-brand-blue text-white rounded-lg text-xs font-semibold flex items-center gap-1.5"><i data-lucide="save" class="w-4 h-4"></i> Simpan Perubahan</button></div>
+        </form>
+      `;
+      overlay.classList.remove('hidden');
+      setTimeout(() => content.classList.remove('scale-95', 'opacity-0'), 10);
+      lucide.createIcons();
+    }
+
+    function handleUpdateUser(e, userId) {
+      e.preventDefault();
+      const userData = {
+        id: userId,
+        name: document.getElementById('editAccName').value,
+        username: document.getElementById('editAccUsername').value,
+        password: document.getElementById('editAccPassword').value,
+        role: document.getElementById('editAccRole').value
+      };
+      google.script.run
+        .withSuccessHandler(res => {
+          if (res.status === 'success') { showToast(res.message, 'success'); closeModal(); loadUsersData(); }
+          else { showToast(res.message, 'error'); }
+        })
+        .updateUser(userData, sessionToken);
+    }
+
+    function confirmDeleteUser(userId, username) {
+      if (!confirm(`Hapus akun "${username}" secara permanen?`)) return;
+      google.script.run
+        .withSuccessHandler(res => {
+          if (res.status === 'success') { showToast(res.message, 'success'); loadUsersData(); }
+          else { showToast(res.message, 'error'); }
+        })
+        .deleteUser(userId, sessionToken);
+    }
+
+    function openAddUserModal() {
+      const overlay = document.getElementById('modalOverlay');
+      const content = document.getElementById('modalContent');
+      content.innerHTML = `
+        <div class="flex justify-between items-center border-b pb-3 mb-4">
+          <h3 class="text-lg font-bold text-slate-900">Tambah Pengguna Baru</h3>
+          <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+        </div>
+        <form onsubmit="handleAddUser(event)" class="space-y-4">
+          <div><label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Nama Lengkap</label><input type="text" id="newAccName" required class="w-full border rounded-lg px-3 py-2 text-sm"></div>
+          <div><label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Username</label><input type="text" id="newAccUsername" required class="w-full border rounded-lg px-3 py-2 text-sm"></div>
+          <div><label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Password</label><input type="password" id="newAccPassword" required class="w-full border rounded-lg px-3 py-2 text-sm"></div>
+          <div><label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Role</label><select id="newAccRole" class="w-full border rounded-lg px-3 py-2 text-sm"><option value="Kesiswaan">Kesiswaan</option><option value="Admin">Admin</option></select></div>
+          <div class="flex justify-end gap-2 pt-3 border-t"><button type="button" onclick="closeModal()" class="px-4 py-2 border text-slate-600 rounded-lg text-xs font-semibold">Batal</button><button type="submit" class="px-4 py-2 bg-brand-blue text-white rounded-lg text-xs font-semibold">Simpan User</button></div>
+        </form>
+      `;
+      overlay.classList.remove('hidden');
+      setTimeout(() => content.classList.remove('scale-95', 'opacity-0'), 10);
+      lucide.createIcons();
+    }
+
+    function handleAddUser(e) {
+      e.preventDefault();
+      const userData = {
+        name: document.getElementById('newAccName').value,
+        username: document.getElementById('newAccUsername').value,
+        password: document.getElementById('newAccPassword').value,
+        role: document.getElementById('newAccRole').value
+      };
+      google.script.run
+        .withSuccessHandler(res => {
+          if (res.status === 'success') { showToast(res.message, 'success'); closeModal(); loadUsersData(); }
+          else { showToast(res.message, 'error'); }
+        })
+        .addUser(userData, sessionToken);
+    }
+
+    function toggleUserStatus(userId, newStatus) {
+      google.script.run
+        .withSuccessHandler(res => {
+          if (res.status === 'success') { showToast(res.message, 'success'); loadUsersData(); }
+        })
+        .updateUserStatus(userId, newStatus, sessionToken);
+    }
+
+    function syncAllData() {
+      if (!sessionToken) {
+        showToast('Silakan login terlebih dahulu.', 'error');
+        return;
+      }
+      showToast('Mengambil data terbaru dari Spreadsheet...', 'info');
+      loadIncidentsData();
+      loadDashboardData();
+      if (currentUser && currentUser.role === 'Admin') loadUsersData();
+      loadLogsData();
+    }
+
+    function exportToCSV() {
+      if (!globalIncidents || globalIncidents.length === 0) { showToast('Tidak ada data untuk diekspor.', 'error'); return; }
+      const headers = ['ID', 'Nomor Laporan', 'Tanggal Laporan', 'Tanggal Kejadian', 'Ringkasan', 'Urgensi', 'Pendamping', 'Status'];
+      const rows = globalIncidents.map(i => [
+        `"${i.id}"`, `"${i.reportNo}"`, `"${i.reportDate ? i.reportDate.split('T')[0] : ''}"`, `"${i.incidentDate ? i.incidentDate.split('T')[0] : ''}"`,
+        `"${(i.summary || '').replace(/"/g, '""')}"`, `"${i.urgency}"`, `"${(i.counselor || '').replace(/"/g, '""')}"`, `"${i.status}"`
+      ]);
+      const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement('a');
+      link.setAttribute('href', encodedUri);
+      link.setAttribute('download', `Rekap_Pengaduan_SRT9_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast('Data berhasil diekspor ke format CSV.', 'success');
+    }
+
+    function renderMonitoringCards() {
+      const container = document.getElementById('monitoringGrid');
+      const activeCases = globalIncidents.filter(i => i.status === 'Pemantauan' || i.status === 'Dirujuk');
+      if (activeCases.length === 0) {
+        container.innerHTML = `<div class="col-span-2 p-8 text-center text-slate-400 bg-white rounded-xl border">Tidak ada kasus aktif dalam pemantauan.</div>`;
+        return;
+      }
+      container.innerHTML = activeCases.map(i => `
+        <div class="bg-white p-5 rounded-xl border border-slate-100 shadow-sm space-y-3">
+          <div class="flex justify-between items-start border-b pb-2">
+            <div>
+              <span class="text-xs font-mono font-bold text-brand-blue">${i.reportNo}</span>
+              <p class="text-xs text-slate-400">Tgl Kejadian: ${i.incidentDate ? i.incidentDate.split('T')[0] : '-'}</p>
+            </div>
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${i.status === 'Pemantauan' ? 'bg-amber-100 text-amber-800' : 'bg-purple-100 text-purple-800'}">${i.status}</span>
+          </div>
+          <p class="text-xs text-slate-700 font-medium">${i.summary}</p>
+          <div class="text-xs bg-slate-50 p-2.5 rounded border"><span class="font-semibold text-slate-600 block mb-0.5">Pendamping:</span><span>${i.counselor || '-'}</span></div>
+          <div class="flex justify-end pt-2"><button onclick="editIncident('${i.id}')" class="text-xs font-semibold text-brand-blue hover:underline flex items-center gap-1"><span>Perbarui Status</span><i data-lucide="chevron-right" class="w-3.5 h-3.5"></i></button></div>
+        </div>
+      `).join('');
+      lucide.createIcons();
+    }
+
+    function loadLogsData() {
+      google.script.run
+        .withSuccessHandler(res => {
+          if (res.status === 'success') {
+            const tbody = document.getElementById('logsTableBody');
+            if (res.data.length === 0) { tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-400">Belum ada riwayat aktivitas.</td></tr>`; return; }
+            tbody.innerHTML = res.data.map(l => `
+              <tr class="hover:bg-slate-50">
+                <td class="p-3 text-xs text-slate-500">${l.timestamp ? new Date(l.timestamp).toLocaleString('id-ID') : '-'}</td>
+                <td class="p-3 text-xs font-semibold text-slate-800">${l.username}</td>
+                <td class="p-3 text-xs"><span class="px-2 py-0.5 rounded bg-slate-100 font-mono text-[10px] text-slate-700">${l.type}</span></td>
+                <td class="p-3 text-xs text-slate-600">${l.description}</td>
+              </tr>
+            `).join('');
+          }
+        })
+        .getActivityLogs(sessionToken);
+    }
+  </script>
+</body>
+</html>
